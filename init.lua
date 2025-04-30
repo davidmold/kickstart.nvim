@@ -90,7 +90,21 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience
-vim.keymap.set('n', '~', '<cmd>belowright 14split | terminal<CR>', { desc = 'Open Terminal' })
+vim.keymap.set('n', '`', function()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].buftype == 'terminal' then
+      local chan_id = vim.b[buf].terminal_job_id
+      if chan_id then
+        vim.fn.jobstop(chan_id)
+      end
+      vim.api.nvim_buf_delete(buf, { force = true })
+      return
+    end
+  end
+
+  vim.cmd 'belowright 14split | terminal'
+end, { desc = 'Toggle Terminal' })
 --
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
@@ -336,6 +350,9 @@ require('lazy').setup({
         --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
         --   },
         -- },
+        defaults = {
+          file_ignore_patterns = { 'node_modules', '.git' },
+        },
         -- pickers = {}
         extensions = {
           ['ui-select'] = {
@@ -607,6 +624,17 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
+        volar = {
+          filetypes = { 'typescript', 'javascript', 'vue' },
+          init_options = {
+            vue = {
+              hybridMode = false,
+            },
+          },
+        },
+        eslint = {
+          filetypes = { 'javascript', 'typescript', 'vue' },
+        },
 
         lua_ls = {
           -- cmd = { ... },
@@ -842,7 +870,6 @@ require('lazy').setup({
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
-
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
@@ -857,7 +884,7 @@ require('lazy').setup({
       statusline.section_location = function()
         return '%2l:%-2v'
       end
-
+      -- 👇 This disables all default keymaps, including <leader>s
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
