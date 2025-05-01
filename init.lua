@@ -631,7 +631,7 @@ require('lazy').setup({
         -- ts_ls = {},
         --
         volar = {
-          filetypes = { 'typescript', 'javascript', 'vue' },
+          filetypes = { 'typescript', 'javascript', 'vue', 'css' },
           init_options = {
             vue = {
               hybridMode = false,
@@ -639,7 +639,7 @@ require('lazy').setup({
           },
         },
         eslint = {
-          filetypes = { 'javascript', 'typescript', 'vue' },
+          filetypes = { 'javascript', 'typescript', 'vue', 'css' },
         },
 
         lua_ls = {
