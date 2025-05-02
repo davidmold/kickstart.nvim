@@ -238,3 +238,15 @@ sudo pacman -S --noconfirm --needed gcc make git ripgrep fd unzip neovim
 ```
 </details>
 
+# David's Additions
+
+For secondary machines, instead of doing git pull, which may give you errors, you should do this
+```
+#!/bin/bash
+git stash push -m lazy && git pull --rebase && git checkout --theirs lazy-lock.json && git stash pop
+```
+which I have included in the pull.sh file. So instead of doing git pull just do
+```
+./pull.sh
+```
+and everything should work out.
