@@ -984,7 +984,18 @@ require('lazy').setup({
     version = "*",
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
-      require("bufferline").setup()
+      require("bufferline").setup {
+        options = {
+          offsets = {
+            {
+              filetype = "NvimTree",
+              text = "File Explorer", -- optional label shown in the offset
+              text_align = "left",
+              separator = true
+            }
+          }
+        }
+      }
     end
   },
 
