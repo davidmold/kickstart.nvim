@@ -34,6 +34,24 @@ vim.schedule(function()
   vim.opt.clipboard = 'unnamedplus'
 end)
 
+-- This should enable clipboard over ssh
+-- but it is typically too slow to be useful
+--[[
+local osc52 = require("vim.ui.clipboard.osc52")
+
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = osc52.copy("+"),
+    ["*"] = osc52.copy("*"),
+  },
+  paste = {
+    ["+"] = osc52.paste("+"),
+    ["*"] = osc52.paste("*"),
+  },
+}
+]]--
+
 -- Enable break indent
 vim.opt.breakindent = true
 
@@ -77,6 +95,8 @@ vim.opt.scrolloff = 4
 -- See `:help 'confirm'`
 vim.opt.confirm = true
 
+-- syntax coloring
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -107,6 +127,16 @@ vim.keymap.set('n', '`', function()
 
   vim.cmd 'belowright 14split | terminal'
 end, { desc = 'Toggle Terminal' })
+
+-- Update the title in windows terminal every time the cwd changes
+-- only seems to work with ssh
+vim.api.nvim_create_autocmd('DirChanged', {
+  callback = function(args)
+    local name = vim.fn.fnamemodify(args.file, ':t')
+    io.write('\27]0;NVIM - ' .. name .. '\7')
+  end,
+})
+
 --
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
@@ -131,6 +161,66 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 vim.keymap.set('n', '<C-s>', '<cmd>w<CR>', { desc = 'Save file' })
 vim.keymap.set('i', '<C-s>', '<C-o>:w<CR>', { desc = 'Save file (insert mode)' })
 
+vim.keymap.set('n', '<leader>tb', function()
+  local buf = vim.api.nvim_create_buf(false, true)
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = 'minimal',
+    border = 'rounded',
+  })
+
+  vim.fn.termopen 'npm run build' -- replace with whatever you want
+end)
+
+vim.keymap.set('n', '<leader>t', function()
+  local buf = vim.api.nvim_create_buf(false, true)
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = 'minimal',
+    border = 'rounded',
+  })
+
+  vim.fn.termopen() -- replace with whatever you want
+end)
+
+vim.keymap.set('n', '<leader>tb', function()
+  local buf = vim.api.nvim_create_buf(false, true)
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = 'minimal',
+    border = 'rounded',
+  })
+
+  vim.fn.termopen 'npm run build' -- replace with whatever you want
+end)
+
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
@@ -151,8 +241,8 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
-vim.api.nvim_create_autocmd("BufEnter", {
-  pattern = "*.vue",
+vim.api.nvim_create_autocmd('BufEnter', {
+  pattern = '*.vue',
   callback = function()
     vim.defer_fn(function()
       vim.treesitter.start()
@@ -184,6 +274,7 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
+
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
@@ -288,17 +379,23 @@ require('lazy').setup({
       },
     },
   },
+  --[[
   {
     'nvim-tree/nvim-tree.lua',
     event = 'VimEnter',
     config = function()
-      require('nvim-tree').setup()
+      require('nvim-tree').setup {
+        filters = {
+          git_ignored = false,
+        },
+      }
       local api = require 'nvim-tree.api'
       vim.keymap.set('n', '<C-n>', function()
         api.tree.toggle { find_file = true }
       end, { desc = 'Toggle nvimtree' })
     end,
   },
+  ]]--
   {
     'vuejs/language-tools',
     ft = 'vue',
@@ -310,7 +407,7 @@ require('lazy').setup({
   -- you do for a plugin at the top level, you can do for a dependency.
   --
   -- Use the `dependencies` key to specify the dependencies of a particular plugin
-  
+
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
@@ -393,7 +490,14 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
-    
+
+      -- Search for $emit('input' when refactoring vue2 to vue3
+      local msearch = [[\$emit\('input']]
+
+      vim.keymap.set('n', '<leader>lfe', function()
+        require('telescope.builtin').live_grep({ default_text = msearch })
+      end, { desc = string.format("Live grep for %s", msearch) })
+
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to Telescope to change the theme, layout, etc.
@@ -421,17 +525,12 @@ require('lazy').setup({
   {
     'nvim-telescope/telescope-project.nvim',
     dependencies = {
-      'nvim-telescope/telescope.nvim'
+      'nvim-telescope/telescope.nvim',
     },
-    config = function ()
-      require'telescope'.load_extension('project')
-      vim.api.nvim_set_keymap(
-        'n',
-        '<C-p>',
-        ":lua require'telescope'.extensions.project.project{}<CR>",
-        {noremap = true, silent = true}
-      )
-    end
+    config = function()
+      require('telescope').load_extension 'project'
+      vim.api.nvim_set_keymap('n', '<C-p>', ":lua require'telescope'.extensions.project.project{}<CR>", { noremap = true, silent = true })
+    end,
   },
   -- LSP Plugins
   {
@@ -453,8 +552,8 @@ require('lazy').setup({
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
       -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { 'williamboman/mason.nvim', opts = {} },
-      'williamboman/mason-lspconfig.nvim',
+      { "mason-org/mason.nvim", version = "1.11.0", opts = {} },
+      { "mason-org/mason-lspconfig.nvim", version = "1.32.0" },
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
@@ -652,19 +751,54 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
+        ts_ls = {},
         --
+        
         volar = {
           filetypes = { 'typescript', 'javascript', 'vue', 'css' },
           init_options = {
             vue = {
-              hybridMode = false,
+              hybridMode = false
             },
-          },
+            typescript = {
+              tsdk = "/home/davidmold/.nvm/versions/node/v22.14.0/lib/node_modules/typescript/lib"
+            }
+          }
         },
-        eslint = {
-          filetypes = { 'javascript', 'typescript', 'vue', 'css' },
-        },
+        
+        -- eslint = {
+        --   filetypes = { 'javascript', 'typescript', 'vue' },
+        -- },
+
+        -- ts_ls = {
+        --   filetypes = { "javascript", "typescript", "javascriptreact", "typescriptreact", "vue"}, -- No vue
+        --   init_options = {
+        --     plugins = {
+        --       {
+        --         name = '@vue/typescript-plugin',
+        --         location = vim.fn.stdpath 'data' .. '/mason/packages/vue-language-server/node_modules/@vue/language-server',
+        --         languages = { 'vue' },
+        --       },
+        --     },
+        --   },
+        --   settings = {
+        --     typescript = {
+        --       tsserver = {
+        --         useSyntaxServer = false,
+        --       },
+        --       inlayHints = {
+        --         includeInlayParameterNameHints = 'all',
+        --         includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+        --         includeInlayFunctionParameterTypeHints = true,
+        --         includeInlayVariableTypeHints = true,
+        --         includeInlayVariableTypeHintsWhenTypeMatchesName = true,
+        --         includeInlayPropertyDeclarationTypeHints = true,
+        --         includeInlayFunctionLikeReturnTypeHints = true,
+        --         includeInlayEnumMemberValueHints = true,
+        --       },
+        --     },
+        --   },
+        -- },
 
         lua_ls = {
           -- cmd = { ... },
@@ -695,16 +829,35 @@ require('lazy').setup({
       --
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
+
+
       local ensure_installed = vim.tbl_keys(servers or {})
+
+      -- print(vim.inspect(ensure_installed))
+
+      -- local ensure_installed = vim.tbl_map(function(name)
+      --   local map = {
+      --     tsserver = "typescript-language-server",
+      --     eslint = "eslint-lsp",
+      --     volar = "vue-language-server",
+      --   }
+      --   return map[name] or name
+      -- end, vim.tbl_keys(servers or {}))
+
+
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
+      
+      
+      -- this no longer seems to get called
       require('mason-lspconfig').setup {
+        
         ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
         automatic_installation = false,
         handlers = {
+  
           function(server_name)
             local server = servers[server_name] or {}
             -- This handles overriding only values explicitly passed
@@ -715,6 +868,8 @@ require('lazy').setup({
           end,
         },
       }
+      
+      -- print("Finished mason-tool-installer setup")
     end,
   },
 
@@ -880,13 +1035,7 @@ require('lazy').setup({
     end,
   },
 
---[[
-{ 
-  'Mofiqul/vscode.nvim', lazy = false, priority = 1000, config = function()
-    vim.cmd.colorscheme("vscode")
-  end 
-},
-]]
+
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -926,7 +1075,7 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
-  
+
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -967,9 +1116,31 @@ require('lazy').setup({
         },
       },
     },
-    {
+    --[[ {
       'nvim-treesitter/nvim-treesitter-textobjects',
+    },]]
+    --
+    {
+      'numToStr/Comment.nvim',
+      opts = {}, -- uses default mappings
+      lazy = false,
     },
+    {
+      'tpope/vim-unimpaired',
+      lazy = false,
+    },
+    -- autotag is a bit of a double-edged sword in VIM
+    --[[
+    {
+      'windwp/nvim-ts-autotag',
+      dependencies = { 'nvim-treesitter/nvim-treesitter' },
+      event = 'BufReadPre',
+      config = function()
+        require('nvim-ts-autotag').setup()
+      end,
+    },
+    ]]
+    --mat0
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
@@ -980,32 +1151,20 @@ require('lazy').setup({
   { -- coloring braces to help you balance them
     'HiPhish/rainbow-delimiters.nvim',
     config = function()
-      local rainbow_delimiters = require('rainbow-delimiters')
+      local rainbow_delimiters = require 'rainbow-delimiters'
       vim.g.rainbow_delimiters = {
         strategy = {
           [''] = rainbow_delimiters.strategy['global'],
         },
       }
-    end
+    end,
   },
   {
-    'akinsho/bufferline.nvim',
-    version = "*",
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
-    config = function()
-      require("bufferline").setup {
-        options = {
-          offsets = {
-            {
-              filetype = "NvimTree",
-              text = "File Explorer", -- optional label shown in the offset
-              text_align = "left",
-              separator = true
-            }
-          }
-        }
-      }
-    end
+    'akinsho/bufferline.nvim', version = "*", 
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = function() 
+      require("bufferline").setup{}
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -1028,7 +1187,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
