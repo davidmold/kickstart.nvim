@@ -5,6 +5,9 @@ vim.g.loaded_netrwPlugin = 1
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+vim.g.shiftwidth = 2
+vim.g.smarttab = true
+vim.g.expandtab = true
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
@@ -50,7 +53,8 @@ vim.g.clipboard = {
     ["*"] = osc52.paste("*"),
   },
 }
-]]--
+]]
+--
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -160,66 +164,6 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- Map standard save key
 vim.keymap.set('n', '<C-s>', '<cmd>w<CR>', { desc = 'Save file' })
 vim.keymap.set('i', '<C-s>', '<C-o>:w<CR>', { desc = 'Save file (insert mode)' })
-
-vim.keymap.set('n', '<leader>tb', function()
-  local buf = vim.api.nvim_create_buf(false, true)
-  local width = math.floor(vim.o.columns * 0.8)
-  local height = math.floor(vim.o.lines * 0.8)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = 'minimal',
-    border = 'rounded',
-  })
-
-  vim.fn.termopen 'npm run build' -- replace with whatever you want
-end)
-
-vim.keymap.set('n', '<leader>t', function()
-  local buf = vim.api.nvim_create_buf(false, true)
-  local width = math.floor(vim.o.columns * 0.8)
-  local height = math.floor(vim.o.lines * 0.8)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = 'minimal',
-    border = 'rounded',
-  })
-
-  vim.fn.termopen() -- replace with whatever you want
-end)
-
-vim.keymap.set('n', '<leader>tb', function()
-  local buf = vim.api.nvim_create_buf(false, true)
-  local width = math.floor(vim.o.columns * 0.8)
-  local height = math.floor(vim.o.lines * 0.8)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = 'minimal',
-    border = 'rounded',
-  })
-
-  vim.fn.termopen 'npm run build' -- replace with whatever you want
-end)
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -395,7 +339,8 @@ require('lazy').setup({
       end, { desc = 'Toggle nvimtree' })
     end,
   },
-  ]]--
+  ]]
+  --
   {
     'vuejs/language-tools',
     ft = 'vue',
@@ -495,8 +440,8 @@ require('lazy').setup({
       local msearch = [[\$emit\('input']]
 
       vim.keymap.set('n', '<leader>lfe', function()
-        require('telescope.builtin').live_grep({ default_text = msearch })
-      end, { desc = string.format("Live grep for %s", msearch) })
+        require('telescope.builtin').live_grep { default_text = msearch }
+      end, { desc = string.format('Live grep for %s', msearch) })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -552,8 +497,8 @@ require('lazy').setup({
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
       -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { "mason-org/mason.nvim", version = "1.11.0", opts = {} },
-      { "mason-org/mason-lspconfig.nvim", version = "1.32.0" },
+      { 'mason-org/mason.nvim', version = '1.11.0', opts = {} },
+      { 'mason-org/mason-lspconfig.nvim', version = '1.32.0' },
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
@@ -753,19 +698,19 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         ts_ls = {},
         --
-        
+
         volar = {
           filetypes = { 'typescript', 'javascript', 'vue', 'css' },
           init_options = {
             vue = {
-              hybridMode = false
+              hybridMode = false,
             },
             typescript = {
-              tsdk = "/home/davidmold/.nvm/versions/node/v22.14.0/lib/node_modules/typescript/lib"
-            }
-          }
+              tsdk = '/home/davidmold/.nvm/versions/node/v22.14.0/lib/node_modules/typescript/lib',
+            },
+          },
         },
-        
+
         -- eslint = {
         --   filetypes = { 'javascript', 'typescript', 'vue' },
         -- },
@@ -830,7 +775,6 @@ require('lazy').setup({
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
 
-
       local ensure_installed = vim.tbl_keys(servers or {})
 
       -- print(vim.inspect(ensure_installed))
@@ -844,20 +788,19 @@ require('lazy').setup({
       --   return map[name] or name
       -- end, vim.tbl_keys(servers or {}))
 
-
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'prettier', -- Used to format vue and javascript
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-      
-      
+
       -- this no longer seems to get called
       require('mason-lspconfig').setup {
-        
+
         ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
         automatic_installation = false,
         handlers = {
-  
+
           function(server_name)
             local server = servers[server_name] or {}
             -- This handles overriding only values explicitly passed
@@ -868,7 +811,7 @@ require('lazy').setup({
           end,
         },
       }
-      
+
       -- print("Finished mason-tool-installer setup")
     end,
   },
@@ -898,13 +841,17 @@ require('lazy').setup({
           return nil
         else
           return {
-            timeout_ms = 500,
+            timeout_ms = 2500,
             lsp_format = 'fallback',
+            lsp_fallback = true,
           }
         end
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        javascript = { 'prettier' },
+        css = { 'prettier' },
+        vue = { 'prettier', stop_after_first = true },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1035,7 +982,6 @@ require('lazy').setup({
     end,
   },
 
-
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -1108,7 +1054,7 @@ require('lazy').setup({
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { 'ruby' },
       },
-      indent = { enable = true, disable = { 'ruby' } },
+      indent = { enable = true, disable = { 'ruby', 'vue' } },
       textobjects = {
         select = {
           enable = true,
@@ -1130,7 +1076,6 @@ require('lazy').setup({
       lazy = false,
     },
     -- autotag is a bit of a double-edged sword in VIM
-    --[[
     {
       'windwp/nvim-ts-autotag',
       dependencies = { 'nvim-treesitter/nvim-treesitter' },
@@ -1139,7 +1084,6 @@ require('lazy').setup({
         require('nvim-ts-autotag').setup()
       end,
     },
-    ]]
     --mat0
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
@@ -1159,11 +1103,22 @@ require('lazy').setup({
       }
     end,
   },
+  -- This gives you tabs
   {
-    'akinsho/bufferline.nvim', version = "*", 
+    'akinsho/bufferline.nvim',
+    version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
-    config = function() 
-      require("bufferline").setup{}
+    config = function()
+      require('bufferline').setup {
+        options = {
+          offsets = {
+            filetype = 'neo-tree',
+            text = 'neo-tree',
+            text_align = 'left',
+            separator = true,
+          },
+        },
+      }
     end,
   },
 
